@@ -17,13 +17,13 @@ const {
 // Determine if we should use AWS or local upload
 const useAwsUpload = hasAwsCredentials();
 
-// Lazy load local file upload only if needed
-let localFileUpload = null;
+// Don't load local file upload at all - it causes issues in serverless
+// Lazy load local file upload only if AWS is not available
 const getLocalFileUpload = () => {
-  if (!localFileUpload) {
-    localFileUpload = require('../middlewares/local-file-upload');
+  if (!useAwsUpload) {
+    throw new AppError('File uploads require AWS S3 configuration in serverless environment', 500);
   }
-  return localFileUpload;
+  return null;
 };
 
 const initiateUpload = catchAsync(async (req, res, next) => {
@@ -46,8 +46,7 @@ const initiateUpload = catchAsync(async (req, res, next) => {
   if (useAwsUpload) {
     response = await initiateMultipartUpload(fileName, filetype);
   } else {
-    const { localInitiateUpload } = getLocalFileUpload();
-    response = await localInitiateUpload(fileName, filetype);
+    return next(new AppError('File uploads require AWS S3 configuration', 500));
   }
   
   return res.status(200).json({ success: true, response, uploadMode: useAwsUpload ? 'aws' : 'local' });
@@ -107,8 +106,7 @@ const completeUpload = catchAsync(async (req, res, next) => {
   if (useAwsUpload) {
     response = await completeMultipartUpload(fileName, uploadId);
   } else {
-    const { localCompleteUpload } = getLocalFileUpload();
-    response = await localCompleteUpload(fileName, uploadId, Buffer.alloc(0));
+    return next(new AppError('File uploads require AWS S3 configuration', 500));
   }
 
   return res.status(200).json({
@@ -157,9 +155,8 @@ const handleLocalChunkUpload = catchAsync(async (req, res, next) => {
     return next(new AppError('No chunk data received.', 400));
   }
 
-  // Store chunk temporarily on disk
-  const { localUploadChunk } = getLocalFileUpload();
-  const response = await localUploadChunk(uploadId, parseInt(partNumber), chunkBuffer);
+  // Local uploads not supported in serverless
+  return next(new AppError('File uploads require AWS S3 configuration', 500));
   
   return res.status(200).json({
     success: true,
