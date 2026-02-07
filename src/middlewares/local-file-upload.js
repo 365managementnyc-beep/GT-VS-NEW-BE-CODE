@@ -2,16 +2,27 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-const uploadDir = path.join(__dirname, '../../public/uploads');
-const tempChunkDir = path.join(__dirname, '../../public/uploads/.chunks');
+// Use /tmp directory for serverless environments (Vercel, AWS Lambda, etc.)
+const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+const uploadDir = isServerless 
+  ? path.join('/tmp', 'uploads')
+  : path.join(__dirname, '../../public/uploads');
+const tempChunkDir = isServerless 
+  ? path.join('/tmp', 'uploads', '.chunks')
+  : path.join(__dirname, '../../public/uploads/.chunks');
 
-// Ensure directories exist
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Ensure directories exist (only create if writable)
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
 
-if (!fs.existsSync(tempChunkDir)) {
-  fs.mkdirSync(tempChunkDir, { recursive: true });
+  if (!fs.existsSync(tempChunkDir)) {
+    fs.mkdirSync(tempChunkDir, { recursive: true });
+  }
+} catch (error) {
+  console.warn('Could not create upload directories (filesystem may be read-only):', error.message);
+  console.warn('File uploads will use S3 or external storage instead');
 }
 
 // Store upload metadata in memory (in production, use database or cache)
