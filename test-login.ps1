@@ -1,6 +1,6 @@
 $body = @{
-    email = "admin@local.test"
-    password = "Admin@12345"
+    email = "admin12345@gmail.com"
+    password = "Adminaszx12345"
 } | ConvertTo-Json
 
 $headers = @{
@@ -8,11 +8,11 @@ $headers = @{
 }
 
 Write-Host "Testing login endpoint..." -ForegroundColor Yellow
-Write-Host "URL: https://gt-vs-new-be-code-5p4x2who0-qs-projects-10333adc.vercel.app/api/auth/login" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "URL: https://gt-vs-new-be-code.vercel.app/api/auth/login" -ForegroundColor Cyan
+Write-Host  ""
 
 try {
-    $response = Invoke-WebRequest -Uri "https://gt-vs-new-be-code-5p4x2who0-qs-projects-10333adc.vercel.app/api/auth/login" -Method POST -Body $body -Headers $headers -UseBasicParsing
+    $response = Invoke-WebRequest -Uri "https://gt-vs-new-be-code.vercel.app/api/auth/login" -Method POST -Body $body -Headers $headers -UseBasicParsing
     Write-Host "✅ SUCCESS!" -ForegroundColor Green
     Write-Host "Status Code: $($response.StatusCode)" -ForegroundColor Green
     Write-Host "Response:" -ForegroundColor Green
@@ -29,3 +29,4 @@ try {
         Write-Host $responseBody
     }
 }
+

@@ -37,6 +37,48 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// MongoDB connection test endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const mongoose = require('mongoose');
+    const connectionState = mongoose.connection.readyState;
+    const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+    
+    if (connectionState !== 1) {
+      // Try to connect if not connected
+      await connectDB();
+    }
+    
+    // Test a simple query
+    const Admin = require('./models/users/Admin');
+    const adminCount = await Admin.countDocuments({});
+    
+    res.status(200).json({ 
+      status: 'success',
+      message: 'MongoDB connection successful',
+      connection: {
+        state: states[connectionState] || 'unknown',
+        stateCode: connectionState,
+        host: mongoose.connection.host,
+        database: mongoose.connection.db?.databaseName
+      },
+      test: {
+        adminCount: adminCount,
+        querySuccessful: true
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'fail',
+      message: 'MongoDB connection failed',
+      error: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
  
