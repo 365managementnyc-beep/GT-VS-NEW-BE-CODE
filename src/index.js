@@ -63,6 +63,15 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Passport serialization (required for sessions)
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
+
 // loading authentication strategies(Google, Facebook) - wrapped in try-catch
 try {
   require('./auth/GoogleStrategy')(passport);
@@ -70,18 +79,6 @@ try {
 } catch (error) {
   console.error('Error loading auth strategies:', error.message);
 }
-
-// Debug middleware to log session data
-app.use((req, res, next) => {
-  if (req.url.includes('/auth/') || req.url.includes('/calendar/')) {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    console.log('Session ID:', req.sessionID);
-    console.log('Session data:', JSON.stringify(req.session, null, 2));
-    console.log('Cookies:', req.headers.cookie);
-    console.log('---');
-  }
-  next();
-});
 
 // Initialize routes
 routes(app);
