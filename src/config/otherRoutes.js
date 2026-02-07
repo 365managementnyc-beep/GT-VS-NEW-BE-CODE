@@ -1,38 +1,13 @@
 require('dotenv').config();
-const http = require('http');
 const AppError = require('../utils/appError');
 const globalErrorHandler = require('../controllers/errorController');
-const {initializeSocket} = require("../utils/socket")
+
 module.exports = (app) => {
-  const server = http.createServer(app);
-
-  const deploymentTimestamp = new Date().toISOString()
-  app.use('/', (req, res, next) => {
-    if (req.path === '/') {
-      res.json({
-      message: "Hello from the server side galatab",
-      deployedAt: deploymentTimestamp
-    })
-    } else {
-      next();
-    }
-  });
-
-
+  // 404 handler for unknown routes
   app.all('/*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
   });
 
-  app.use((req, res, next) => {
-    req.requestTime = new Date().toISOString();
-    next();
-  });
+  // Global error handler
   app.use(globalErrorHandler);
-
-  const port = process.env.PORT;
-  server.listen(port, () => {
-    initializeSocket(server)
-    
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${port}`.yellow.bold);
-  });
 };

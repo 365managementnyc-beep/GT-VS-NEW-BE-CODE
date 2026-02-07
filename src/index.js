@@ -17,6 +17,24 @@ const routes = require('./config/routes');
 
 
 const app = express();
+
+// Health check route - must be first
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'success', 
+    message: 'Gala Tab API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'success', 
+    message: 'API is healthy',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
  
@@ -45,9 +63,13 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// loading authentication strategies(Google, Facebook)
-require('./auth/GoogleStrategy')(passport);
-require("./auth/FacebookStrategy")(passport);
+// loading authentication strategies(Google, Facebook) - wrapped in try-catch
+try {
+  require('./auth/GoogleStrategy')(passport);
+  require("./auth/FacebookStrategy")(passport);
+} catch (error) {
+  console.error('Error loading auth strategies:', error.message);
+}
 
 // Debug middleware to log session data
 app.use((req, res, next) => {
@@ -64,8 +86,10 @@ app.use((req, res, next) => {
 // Initialize routes
 routes(app);
 
-// Connect to database
-connectDB();
+// Connect to database (non-blocking for serverless)
+connectDB().catch(err => {
+  console.error('MongoDB connection error:', err.message);
+});
 
 // Start server only in non-serverless environment
 const PORT = process.env.PORT || 5000;
