@@ -6,11 +6,14 @@ const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/connectDb');
 const configMiddlewares = require('./config/configMiddlewares');
 const routes = require('./config/routes');
-require("./utils/updateRequest");
+
+// Disable cron jobs for serverless deployment (Vercel)
+// These should be run via Vercel Cron Jobs or external schedulers
+// require("./utils/updateRequest");
 // require("./utils/VendorPayout");
-require("./utils/checkstripebalance");
-require("./utils/PayoutCrone");
-require("./utils/autoDeleteOldPendingBookings");
+// require("./utils/checkstripebalance");
+// require("./utils/PayoutCrone");
+// require("./utils/autoDeleteOldPendingBookings");
 
 
 const app = express();
