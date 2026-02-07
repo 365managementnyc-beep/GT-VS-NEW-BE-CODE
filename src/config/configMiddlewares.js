@@ -15,8 +15,16 @@ const qs = require('qs');
 // const updateBookingStatus = require('../jobs/updateBookingStatus');
 
 module.exports = (app) => {
-  app.use(cors());
-  app.options('*', cors());
+  const corsOptions = {
+    origin: process.env.FRONTEND_URL || '*',
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  };
+  
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cookieParser());
   app.use(xss());
