@@ -3,11 +3,12 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 // Use /tmp directory for serverless environments (Vercel, AWS Lambda, etc.)
-// Don't create directories at module load time - create them when needed
+// IMPORTANT: Don't create directories at module load time - create them when needed!
+// This prevents crashes in read-only filesystems
 const uploadDir = '/tmp/uploads';
 const tempChunkDir = '/tmp/uploads/.chunks';
 
-// Helper function to ensure directories exist
+// Helper function to ensure directories exist (called only when needed)
 const ensureDirectories = () => {
   try {
     if (!fs.existsSync(uploadDir)) {
@@ -22,6 +23,9 @@ const ensureDirectories = () => {
     return false;
   }
 };
+
+// DO NOT call ensureDirectories() at module load time!
+// It will be called when functions are actually used
 
 // Store upload metadata in memory (in production, use database or cache)
 const uploadMetadata = new Map();
