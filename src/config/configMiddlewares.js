@@ -15,12 +15,13 @@ const qs = require('qs');
 // const updateBookingStatus = require('../jobs/updateBookingStatus');
 
 module.exports = (app) => {
+  // Allow all origins for now - tighten this later
   const corsOptions = {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: true, // Allow all origins
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
   };
   
   app.use(cors(corsOptions));
