@@ -19,11 +19,13 @@ const routes = require('./config/routes');
 const app = express();
 
 // Health check route - must be first
+// Updated: Force redeploy to apply file upload fix
 app.get('/', (req, res) => {
   res.status(200).json({ 
     status: 'success', 
     message: 'Gala Tab API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    version: '1.0.1'
   });
 });
 
