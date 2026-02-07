@@ -3,27 +3,25 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 // Use /tmp directory for serverless environments (Vercel, AWS Lambda, etc.)
-const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
-const uploadDir = isServerless 
-  ? path.join('/tmp', 'uploads')
-  : path.join(__dirname, '../../public/uploads');
-const tempChunkDir = isServerless 
-  ? path.join('/tmp', 'uploads', '.chunks')
-  : path.join(__dirname, '../../public/uploads/.chunks');
+// Don't create directories at module load time - create them when needed
+const uploadDir = '/tmp/uploads';
+const tempChunkDir = '/tmp/uploads/.chunks';
 
-// Ensure directories exist (only create if writable)
-try {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+// Helper function to ensure directories exist
+const ensureDirectories = () => {
+  try {
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    if (!fs.existsSync(tempChunkDir)) {
+      fs.mkdirSync(tempChunkDir, { recursive: true });
+    }
+    return true;
+  } catch (error) {
+    console.warn('Could not create upload directories:', error.message);
+    return false;
   }
-
-  if (!fs.existsSync(tempChunkDir)) {
-    fs.mkdirSync(tempChunkDir, { recursive: true });
-  }
-} catch (error) {
-  console.warn('Could not create upload directories (filesystem may be read-only):', error.message);
-  console.warn('File uploads will use S3 or external storage instead');
-}
+};
 
 // Store upload metadata in memory (in production, use database or cache)
 const uploadMetadata = new Map();
@@ -52,6 +50,9 @@ const localCreatePresignedUrl = async (fileName, uploadId, partNumber, filetype)
 
 const localCompleteUpload = async (fileName, uploadId, chunks) => {
   try {
+    // Ensure directories exist before attempting file operations
+    ensureDirectories();
+    
     const metadata = uploadMetadata.get(uploadId);
     if (!metadata) {
       throw new Error('Upload ID not found');
@@ -121,6 +122,9 @@ const localCompleteUpload = async (fileName, uploadId, chunks) => {
 
 const localUploadChunk = async (uploadId, partNumber, fileBuffer) => {
   try {
+    // Ensure directories exist before attempting file operations
+    ensureDirectories();
+    
     const metadata = uploadMetadata.get(uploadId);
     if (!metadata) {
       throw new Error('Upload ID not found');
