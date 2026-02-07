@@ -6,12 +6,6 @@ const {
   generateDownloadUrl,
   hasAwsCredentials
 } = require('../middlewares/aws-v3');
-const {
-  localInitiateUpload,
-  localCreatePresignedUrl,
-  localCompleteUpload,
-  localUploadChunk
-} = require('../middlewares/local-file-upload');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const {
@@ -22,6 +16,15 @@ const {
 
 // Determine if we should use AWS or local upload
 const useAwsUpload = hasAwsCredentials();
+
+// Lazy load local file upload only if needed
+let localFileUpload = null;
+const getLocalFileUpload = () => {
+  if (!localFileUpload) {
+    localFileUpload = require('../middlewares/local-file-upload');
+  }
+  return localFileUpload;
+};
 
 const initiateUpload = catchAsync(async (req, res, next) => {
   const { error } = initiateUploadSchema.validate(req.body, {
@@ -43,6 +46,7 @@ const initiateUpload = catchAsync(async (req, res, next) => {
   if (useAwsUpload) {
     response = await initiateMultipartUpload(fileName, filetype);
   } else {
+    const { localInitiateUpload } = getLocalFileUpload();
     response = await localInitiateUpload(fileName, filetype);
   }
   
@@ -103,6 +107,7 @@ const completeUpload = catchAsync(async (req, res, next) => {
   if (useAwsUpload) {
     response = await completeMultipartUpload(fileName, uploadId);
   } else {
+    const { localCompleteUpload } = getLocalFileUpload();
     response = await localCompleteUpload(fileName, uploadId, Buffer.alloc(0));
   }
 
@@ -153,6 +158,7 @@ const handleLocalChunkUpload = catchAsync(async (req, res, next) => {
   }
 
   // Store chunk temporarily on disk
+  const { localUploadChunk } = getLocalFileUpload();
   const response = await localUploadChunk(uploadId, parseInt(partNumber), chunkBuffer);
   
   return res.status(200).json({
