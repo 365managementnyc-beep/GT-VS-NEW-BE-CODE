@@ -1,0 +1,27 @@
+const { Schema, model } = require('mongoose');
+
+const KYCDocumentSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  sessionToken: { type: String, required: true },
+  documentType: {
+    type: String,
+    enum: ['national_id', 'passport', 'driver_license'],
+    required: true
+  },
+  frontImageUrl: { type: String, required: true },
+  backImageUrl: { type: String, required: true },
+  selfieImageUrl: { type: String, required: true },
+  status: {
+    type: String,
+    enum: ['pending', "inprogress", 'abandoned', 'expired', "resubmission_requested", "approved"],
+    default: 'inprogress'
+  },
+  rejectionReason: { type: String },
+  country: {
+    type: String,
+    trim: true
+  },
+  uploadedAt: { type: Date, default: Date.now }
+});
+
+module.exports = model('KYCDocument', KYCDocumentSchema);
