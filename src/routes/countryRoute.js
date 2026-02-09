@@ -4,7 +4,8 @@ const {
     createCountry,
     deleteCountry,
     updateCountry,
-    getCountriesNames
+    getCountriesNames,
+    restoreDeletedCountries
 } = require('../controllers/CountryController');
 const requireAuth = require('../middlewares/requireAuth');
 const restrictTo = require('../middlewares/restrictTo');
@@ -17,7 +18,12 @@ router
   .route('/')
   .post(requireAuth, restrictTo(['admin']), logActionMiddleware("Create SubAdmin", "Country"),createCountry)
   .get(requireAuth, restrictTo(['admin']), getAllCountries);
-  router.route('/getCountriesNames').get(getCountriesNames)
+  
+router.route('/getCountriesNames').get(getCountriesNames);
+
+// Restore deleted countries endpoint (admin only)
+router.route('/restore-deleted').post(requireAuth, restrictTo(['admin']), restoreDeletedCountries);
+
 router.route('/:id')
   .delete(requireAuth, restrictTo(['admin']), logActionMiddleware("Create SubAdmin", "Country"), deleteCountry)
   .patch(requireAuth, restrictTo(['admin']), logActionMiddleware("Update SubAdmin", "Country"), updateCountry)

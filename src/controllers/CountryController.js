@@ -131,11 +131,44 @@ const getCountriesNames = catchAsync(async (req, res) => {
     });
 });
 
+/// ///////////////////////restore deleted countries///////////////////////////////////////
+const restoreDeletedCountries = catchAsync(async (req, res) => {
+    // Find all deleted countries
+    const deletedCountries = await Country.find({ isDeleted: true });
+    
+    if (deletedCountries.length === 0) {
+        return res.status(200).json({
+            status: 'success',
+            message: 'No deleted countries found',
+            restored: 0
+        });
+    }
+
+    // Restore all deleted countries
+    const result = await Country.updateMany(
+        { isDeleted: true },
+        { 
+            $set: { 
+                isDeleted: false,
+                status: 'Active'
+            }
+        }
+    );
+
+    return res.status(200).json({
+        status: 'success',
+        message: `Successfully restored ${result.modifiedCount} countries`,
+        restored: result.modifiedCount,
+        countries: deletedCountries.map(c => c.country)
+    });
+});
+
 module.exports = {
     getAllCountries,
     createCountry,
     deleteCountry,
     updateCountry,
-    getCountriesNames
+    getCountriesNames,
+    restoreDeletedCountries
 };
 
