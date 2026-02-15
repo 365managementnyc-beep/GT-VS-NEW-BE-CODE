@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const User = require('../models/users/User');
 const Booking = require('../models/Bookings');
 const sendNotification = require('../utils/storeNotification');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const createDispute = catchAsync(async (req, res, next) => {
     const { description, property, status } = req.body;
@@ -160,12 +161,12 @@ const getAllDisputeForAdmin = catchAsync(async (req, res) => {
         sortBy = 'createdAt',
         sortOrder = 'desc',
         userRole,
-        isDeleted = false,
         search
     } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
     const skip = (page - 1) * parseInt(limit, 10);
     const sortOptions = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
-    const baseMatch = { isDeleted: isDeleted };
+    const baseMatch = withSoftDeleteFilter({}, isDeleted);
     if (userRole) {
         baseMatch.disputeRole = userRole;
     }
@@ -267,15 +268,12 @@ const getAllDisputeOfUser = catchAsync(async (req, res) => {
         sortOrder = 'desc',
         status,
         search = '',
-        isDeleted = false
     } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
     const skip = (page - 1) * parseInt(limit, 10);
 
     // Base match for disputes of the logged-in user (and status if provided)
-    const baseMatch = {
-        disputeBy: req.user?._id,
-        isDeleted
-    };
+    const baseMatch = withSoftDeleteFilter({ disputeBy: req.user?._id }, isDeleted);
     if (status) {
         baseMatch.status = status;
     }

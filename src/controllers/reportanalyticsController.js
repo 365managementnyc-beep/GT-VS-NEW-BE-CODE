@@ -10,13 +10,14 @@ const Payment = require('../models/Payment');
 const Bookings = require('../models/Bookings');
 const { servicelistingFormat } = require('../utils/dataformat');
 const Staff = require('../models/users/Staff');
+const { withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 const getReportForVendor = catchAsync(async (req, res) => {
     const vendorId = req.user._id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const query = { isDeleted: false };
+    const query = withSoftDeleteFilter({}, false);
 
     if (req.query.serviceTypeId) {
         query.serviceTypeId = new mongoose.Types.ObjectId(req.query.serviceTypeId);
@@ -77,7 +78,7 @@ const getReportForVendor = catchAsync(async (req, res) => {
             { $skip: skip },
             { $limit: limit }
         ]),
-        ServiceListing.countDocuments({ vendorId ,isDeleted: false}),
+        ServiceListing.countDocuments(withSoftDeleteFilter({ vendorId }, false)),
     ]);
 
     res.status(200).json({
@@ -99,8 +100,8 @@ const customerDashboard = catchAsync(async (req, res) => {
                 _id: {
                     $in: req.user?.lastViewedServices || []
                 },
-                isDeleted: false,
                 status: "Available"
+                ,...withSoftDeleteFilter({}, false)
             }
         },
         ...servicelistingFormat
@@ -114,11 +115,10 @@ const customerDashboard = catchAsync(async (req, res) => {
         },
         {
             $match: {
-                // isDeleted: false,
                 status: "Available",
                 completed: true,
-                isDeleted: false,
-                VerificationStatus: "verified"
+                VerificationStatus: "verified",
+                ...withSoftDeleteFilter({}, false)
             }
         },
         {
@@ -129,7 +129,7 @@ const customerDashboard = catchAsync(async (req, res) => {
     ///////////////favourite listings counts/////////////////////
     const favouriteListingsCount = await ServiceListing.countDocuments({
         likedBy: { $in: [req.user._id?.toString()] || [] },
-        isDeleted: false
+        ...withSoftDeleteFilter({}, false)
     });
 
     const countStaff = await Staff.countDocuments({
@@ -155,7 +155,7 @@ const vendorDashboard = catchAsync(async (req, res) => {
         {
             $match: {
                 vendorId,
-                isDeleted: false
+                ...withSoftDeleteFilter({}, false)
             }
         },
         {
@@ -248,7 +248,7 @@ const vendorDashboard = catchAsync(async (req, res) => {
         {
             $match: {
                 vendorId,
-                isDeleted: false
+                ...withSoftDeleteFilter({}, false)
             }
         },
         {
@@ -413,9 +413,7 @@ const adminDashboard = catchAsync(async (req, res) => {
 
     const serviceListingsCount = await ServiceListing.aggregate([
         {
-            $match: {
-                isDeleted: false
-            }
+            $match: withSoftDeleteFilter({}, false)
         },
         {
             $group: {
@@ -524,8 +522,8 @@ const adminDashboard = catchAsync(async (req, res) => {
     });
   
     const countStaff = await Staff.countDocuments({
-        isDeleted: false,
-        staffOf:req.user._id
+        staffOf:req.user._id,
+        ...withSoftDeleteFilter({}, false)
     });
 
     res.status(200).json({
@@ -555,7 +553,7 @@ const getReportForAdmin = catchAsync(async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const query = { isDeleted: false };
+    const query = withSoftDeleteFilter({}, false);
 
     if (req.query.serviceTypeId) {
         query.serviceTypeId = new mongoose.Types.ObjectId(req.query.serviceTypeId);
@@ -654,12 +652,12 @@ const monthlyvendorStats = catchAsync(async (req, res, next) => {
     const results = await Bookings.aggregate([
         {
             $match: {
-                isDeleted: false,
                 status: { $in: ['booked', 'completed'] },
                 checkIn: {
                     $gte: new Date(`${selectedYear}-01-01`),
                     $lt: new Date(`${selectedYear + 1}-01-01`)
-                }
+                },
+                ...withSoftDeleteFilter({}, false)
             }
         },
         {

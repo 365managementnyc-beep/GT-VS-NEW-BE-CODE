@@ -4,6 +4,7 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Email = require('../utils/email');
 const NewsletterSettings = require('../models/NewLetterPermission');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const sendEmail = async (subject, email, text, data) => {
     await new Email(email, subject).sendTextEmail(subject, text, data);
@@ -30,19 +31,18 @@ const createNewsletter = catchAsync(async (req, res, next) => {
 
 
 const getAllNewsletters = catchAsync(async (req, res) => {
-    const { search, isDeleted = false } = req.query;
-    let query = { isDeleted };
+    const { search } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    let query = {};
     if (search) {
-        query = {
-            ...query,
-            $or: [
-                { email: { $regex: search, $options: 'i' } }
-            ]
-        };
+        query.$or = [
+            { email: { $regex: search, $options: 'i' } }
+        ];
     }
+    query = withSoftDeleteFilter(query, isDeleted);
     const features = new APIFeatures(Newsletter.find(query), req.query).paginate();
     const newsletters = await features.query;
-    const totalNewsletters = await Newsletter.countDocuments();
+    const totalNewsletters = await Newsletter.countDocuments(query);
 
     return res.status(200).json({
         status: 'success',

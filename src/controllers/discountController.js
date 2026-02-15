@@ -11,6 +11,7 @@ const {
   updateCoupon,
   deleteCoupon
 } = require('../utils/stripe-utils/customers.utils');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 // Create Discount
 const createDiscount = catchAsync(async (req, res, next) => {
   const {
@@ -88,16 +89,19 @@ const getAllDiscounts = catchAsync(async (req, res, next) => {
   const limit = req.query.limit * 1 || 10;
   const skip = (page - 1) * limit;
 
-  const { status, isDeleted = false } = req.query;
-  const queryObj = { isDeleted: isDeleted }; // Initialize with isDeleted filter
+  const { status } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+  const queryObj = {};
 
   if (status) {
     queryObj.status = status;
   }
 
-  const discounts = await Discount.find(queryObj).skip(skip).limit(limit);
+  const filterQuery = withSoftDeleteFilter(queryObj, isDeleted);
 
-  const totalDiscounts = await Discount.countDocuments(queryObj);
+  const discounts = await Discount.find(filterQuery).skip(skip).limit(limit);
+
+  const totalDiscounts = await Discount.countDocuments(filterQuery);
   const totalPages = Math.ceil(totalDiscounts / limit);
 
   res.status(200).json({
@@ -257,9 +261,10 @@ const deleteDiscount = catchAsync(async (req, res, next) => {
 });
 const getdiscountForVendor = catchAsync(async (req, res, next) => {
   const vendorId = req.user._id;
-  const { status, endDate, startDate, isDeleted = false, page = 1, limit = 10, search } = req.query;
+  const { status, endDate, startDate, page = 1, limit = 10, search } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const skip = (page - 1) * limit;
-  const queryObj = { isDeleted, vendorId: vendorId };
+  const queryObj = { vendorId: vendorId };
 
   if (status) {
     queryObj.status = status;
@@ -287,9 +292,10 @@ const getdiscountForVendor = catchAsync(async (req, res, next) => {
   }
 
   console.log(queryObj, 'queryObj');
-  const discounts = await Discount.find(queryObj).skip(skip).limit(limit);
+  const filterQuery = withSoftDeleteFilter(queryObj, isDeleted);
+  const discounts = await Discount.find(filterQuery).skip(skip).limit(limit);
 
-  const totalDiscounts = await Discount.countDocuments(queryObj);
+  const totalDiscounts = await Discount.countDocuments(filterQuery);
   const totalPages = Math.ceil(totalDiscounts / limit);
 
   res.status(200).json({

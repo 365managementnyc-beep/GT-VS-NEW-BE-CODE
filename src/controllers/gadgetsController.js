@@ -1,10 +1,11 @@
 const Gadgets = require('../models/ServiceGadgets');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const getAllGadgets = catchAsync(async (req, res) => {
-  const isDeleted = req.query.isDeleted === 'true' || req.query.isDeleted === 'false' ? req.query.isDeleted : false;
-  const gadgets = await Gadgets.find({ isDeleted});
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+  const gadgets = await Gadgets.find(withSoftDeleteFilter({}, isDeleted));
   res.status(200).json({
     status: 'success',
     results: gadgets.length,

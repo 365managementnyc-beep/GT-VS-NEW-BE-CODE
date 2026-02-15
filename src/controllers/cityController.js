@@ -5,21 +5,21 @@ const catchAsync = require('../utils/catchAsync');
 const { CityValidation } = require('../utils/joi/countryValidation');
 const joiError = require('../utils/joiError');
 const { sendMailtoSuscribers } = require('../utils/sendNewsLetter');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 // Get All Cities
 const getAllCities = catchAsync(async (req, res) => {
-    const { search, isDeleted = false } = req.query;
-    let query = { isDeleted };
+    const { search } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    let query = {};
     if (search) {
-        query = {
-            ...query,
-            $or: [
-                { city: { $regex: search, $options: 'i' } },
-                { province: { $regex: search, $options: 'i' } },
-                { country: { $regex: search, $options: 'i' } }
-            ]
-        };
+        query.$or = [
+            { city: { $regex: search, $options: 'i' } },
+            { province: { $regex: search, $options: 'i' } },
+            { country: { $regex: search, $options: 'i' } }
+        ];
     }
+    query = withSoftDeleteFilter(query, isDeleted);
     const features = new APIFeatures(City.find(query), req.query).paginate();
     const cities = await features.query;
     const totalCities = await City.countDocuments(query);
@@ -123,8 +123,8 @@ const updateCity = catchAsync(async (req, res, next) => {
 });
 /// //////////////////////////////////////get cities names///////////////////////////////////////
 const getCitiesNames = catchAsync(async (req, res) => {
-    const { isDeleted = false } = req.query;
-    const cities = await City.find({ isDeleted: isDeleted,status:"Active" }).select('city country');
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    const cities = await City.find(withSoftDeleteFilter({ status:"Active" }, isDeleted)).select('city country');
     return res.status(200).json({
         status: 'success',
         results: cities.length,

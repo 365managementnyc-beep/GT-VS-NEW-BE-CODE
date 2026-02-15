@@ -6,6 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const { ReviewReportValidation } = require('../utils/joi/reportValidation');
 const joiError = require('../utils/joiError');
 const sendNotification = require('../utils/storeNotification');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 // Create a report for a review
 const createReportReview = catchAsync(async (req, res, next) => {
@@ -76,10 +77,11 @@ const createReportReview = catchAsync(async (req, res, next) => {
 
 // Get all reported reviews
 const getAllReportedReviews = catchAsync(async (req, res, next) => {
-    const { page = 1, limit = 10, reportType, status, isDeleted = false, search } = req.query;
+  const { page = 1, limit = 10, reportType, status, search } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
 
     const skip = (page - 1) * limit;
-    const matchStage = { isDeleted: isDeleted === 'true' };
+  const matchStage = withSoftDeleteFilter({}, isDeleted);
 
     if (reportType) {
         matchStage.reportType = reportType;

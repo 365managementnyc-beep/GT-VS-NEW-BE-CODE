@@ -4,16 +4,19 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { advertisementSchema } = require('../utils/joi/advertisementValidation');
 const joiError = require('../utils/joiError');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 // Get All Advertisement
 const getAllAdvertisement = catchAsync(async (req, res) => {
-  const { page = 1, limit = 10,isDeleted=false } = req.query;
+  const { page = 1, limit = 10 } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const skip = (page - 1) * limit;
+  const filterQuery = withSoftDeleteFilter({}, isDeleted);
 
-  const advertisementQuery = Advertisement.find({ isDeleted: false }).skip(skip).limit(parseInt(limit, 10));
+  const advertisementQuery = Advertisement.find(filterQuery).skip(skip).limit(parseInt(limit, 10));
   const [advertisement, totalCount] = await Promise.all([
     advertisementQuery,
-    Advertisement.countDocuments({ isDeleted: isDeleted })
+    Advertisement.countDocuments(filterQuery)
   ]);
 
   return res.status(200).json({

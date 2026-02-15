@@ -7,6 +7,7 @@ const catchAsync = require('../utils/catchAsync');
 const { ReviewValidation } = require('../utils/joi/reviewValidation');
 const joiError = require('../utils/joiError');
 const sendNotification = require('../utils/storeNotification');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const AddReview = catchAsync(async (req, res, next) => {
   const { rating, comment, reviewOn } = req.body;
@@ -91,12 +92,12 @@ const getAllReviews = catchAsync(async (req, res, next) => {
     owners,
     ratings,
     search,
-    isDeleted = false,
     reviewerRole
   } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const skip = (page - 1) * limit;
 
-  const matchStage = { isDeleted: isDeleted };
+  const matchStage = {};
 
   if (reviewType) {
     matchStage.reviewType = reviewType;
@@ -137,6 +138,8 @@ const getAllReviews = catchAsync(async (req, res, next) => {
       { comment: { $regex: search, $options: 'i' } }
     ];
   }
+
+  const finalMatchStage = withSoftDeleteFilter(matchStage, isDeleted);
 
   const queryPipeline = [
     {
@@ -187,7 +190,7 @@ const getAllReviews = catchAsync(async (req, res, next) => {
         }
       }
     },
-    { $match: matchStage }
+    { $match: finalMatchStage }
   ];
 
   const result = await Review.aggregate([
@@ -253,7 +256,8 @@ const getAllReviews = catchAsync(async (req, res, next) => {
 });
 
 const getReviewsforService = catchAsync(async (req, res, next) => {
-  const { page = 1, limit = 10, isDeleted = false } = req.query;
+  const { page = 1, limit = 10 } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const skip = (page - 1) * limit;
 
   const query = [
@@ -281,12 +285,11 @@ const getReviewsforService = catchAsync(async (req, res, next) => {
     },
     { $unwind: '$booking' },
     {
-      $match: {
+      $match: withSoftDeleteFilter({
         reviewType: req.query.reviewType || { $exists: true },
-        'booking.service': new mongoose.Types.ObjectId(req.params.id), // Make sure it's ObjectId
-        isDeleted: isDeleted,
+        'booking.service': new mongoose.Types.ObjectId(req.params.id),
         hide: false
-      }
+      }, isDeleted)
     }
   ];
 
@@ -442,7 +445,8 @@ const hideReview = catchAsync(async (req, res, next) => {
 });
 
 const getUserReviewsByVendor = catchAsync(async (req, res, next) => {
-   const { page = 1, limit = 10, isDeleted = false, reviewType } = req.query;
+  const { page = 1, limit = 10, reviewType } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const user = req.user._id;
   const skip = (page - 1) * limit;
 
@@ -481,10 +485,9 @@ const getUserReviewsByVendor = catchAsync(async (req, res, next) => {
     },
     { $unwind: { path: '$service' } },
     {
-      $match: {
-        isDeleted: isDeleted,
+      $match: withSoftDeleteFilter({
         ...(reviewType && { reviewType: reviewType })
-      }
+      }, isDeleted)
     }
   ];
 
@@ -556,7 +559,8 @@ const getUserReviewsByVendor = catchAsync(async (req, res, next) => {
   });
 });
 const getUserReviewsById = catchAsync(async (req, res, next) => {
-  const { page = 1, limit = 10, isDeleted = false, reviewType } = req.query;
+  const { page = 1, limit = 10, reviewType } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const user = req.params.id;
   const skip = (page - 1) * limit;
 
@@ -595,10 +599,9 @@ const getUserReviewsById = catchAsync(async (req, res, next) => {
     },
     { $unwind: { path: '$service' } },
     {
-      $match: {
-        isDeleted: isDeleted,
+      $match: withSoftDeleteFilter({
         ...(reviewType && { reviewType: reviewType })
-      }
+      }, isDeleted)
     }
   ];
 

@@ -16,6 +16,7 @@ const {
 } = require('../utils/stripe-utils/connect-accounts.util');
 const Email = require('../utils/email');
 const User = require('../models/users/User');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const getDateRange = (filter) => {
   const now = moment.utc();
@@ -81,7 +82,8 @@ const getfilterquery = (params) => {
     endDate
   } = params;
 
-  const matchStage = { isDeleted };
+  const normalizedIsDeleted = normalizeIsDeleted(isDeleted);
+  const matchStage = {};
 
   // Convert ids to ObjectId(s)
   if (ids) {
@@ -240,9 +242,11 @@ const getfilterquery = (params) => {
     };
   }
 
-  console.log('matchStage', matchStage);
+  const finalMatchStage = withSoftDeleteFilter(matchStage, normalizedIsDeleted);
 
-  return matchStage;
+  console.log('matchStage', finalMatchStage);
+
+  return finalMatchStage;
 };
 
 const filterForServiceAvailabilities = (params) => {
@@ -825,10 +829,10 @@ const getAllServiceListings = catchAsync(async (req, res) => {
     status,
     dateFilter,
     favorite,
-    isDeleted = false,
     search
   } = req.query;
-  const query = { vendorId, isDeleted };
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+  const query = { vendorId };
   if (startDate && endDate) {
     const start = moment.utc(startDate).startOf('day');
     const end = moment.utc(endDate).endOf('day');
@@ -875,8 +879,10 @@ const getAllServiceListings = catchAsync(async (req, res) => {
     query.status = status;
   }
 
+  const finalQuery = withSoftDeleteFilter(query, isDeleted);
+
   const aggregation = ServiceListing.aggregate([
-    { $match: query },
+    { $match: finalQuery },
     ...servicelistingFormat,
     { $sort: { createdAt: -1 } },
     { $skip: (page - 1) * Number(limit) },
@@ -885,7 +891,7 @@ const getAllServiceListings = catchAsync(async (req, res) => {
 
   const serviceListings = await aggregation.exec();
 
-  const totalCount = await ServiceListing.countDocuments(query);
+  const totalCount = await ServiceListing.countDocuments(finalQuery);
 
   return res.status(200).json({
     status: 'success',
@@ -907,12 +913,11 @@ const getAllLikedListings = catchAsync(async (req, res) => {
     serviceTypeIds,
     status,
     dateFilter,
-    isDeleted = false,
     search
   } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const query = {
     likedBy: { $in: [vendorId] },
-    isDeleted,
     status: 'Available',
     VerificationStatus: 'verified',
     completed: true
@@ -948,8 +953,10 @@ const getAllLikedListings = catchAsync(async (req, res) => {
     query.status = { $in: status };
   }
 
+  const finalQuery = withSoftDeleteFilter(query, isDeleted);
+
   const pipeline = [
-    { $match: query },
+    { $match: finalQuery },
     {
       $lookup: {
         from: 'users',

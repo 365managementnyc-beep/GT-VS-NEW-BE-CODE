@@ -4,6 +4,7 @@ const catchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
 const { ClientReviewValidation } = require('../utils/joi/clientReviewValidation');
 const joiError = require('../utils/joiError');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 // Create a new client review
 const createClientReview = catchAsync(async (req, res, next) => {
@@ -47,13 +48,13 @@ const getAllClientReviews = catchAsync(async (req, res, next) => {
         limit = 10,
         rating,
         isActive,
-        isDeleted = false,
         search,
         sort = '-createdAt'
     } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
 
     const skip = (page - 1) * limit;
-    const matchStage = { isDeleted: isDeleted === 'true' };
+    const matchStage = {};
 
     // Filter by rating
     if (rating) {
@@ -73,13 +74,15 @@ const getAllClientReviews = catchAsync(async (req, res, next) => {
         ];
     }
 
+    const finalMatchStage = withSoftDeleteFilter(matchStage, isDeleted);
+
     // Get reviews with pagination
-    const clientReviews = await ClientReview.find(matchStage)
+    const clientReviews = await ClientReview.find(finalMatchStage)
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit));
 
-    const total = await ClientReview.countDocuments(matchStage);
+    const total = await ClientReview.countDocuments(finalMatchStage);
 
     res.status(200).json({
         status: 'success',

@@ -4,12 +4,13 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const { FAQValidation } = require('../utils/joi/FAQVaildation');
 const joiError = require('../utils/joiError');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 // Get all FAQs (optionally filter by serviceId)
 const getAllFaqs = catchAsync(async (req, res) => {
     const { id } = req.params;
-    const { isDeleted = false } = req.query;
-    const filter = { serviceId: id, isDeleted }
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    const filter = withSoftDeleteFilter({ serviceId: id }, isDeleted)
     const faqs = await Faq.find(filter);
     res.status(200).json({
         status: 'success',
@@ -19,8 +20,9 @@ const getAllFaqs = catchAsync(async (req, res) => {
 });
 const getAllFaqswithoutId = catchAsync(async (req, res, next) => {
     try {
-        const { faqType, isDeleted = false, search } = req.query;
-        let filter = faqType ? { faqType, isDeleted } : { isDeleted };
+        const { faqType, search } = req.query;
+        const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+        let filter = faqType ? { faqType } : {};
 
         if (search) {
             filter = {
@@ -33,6 +35,8 @@ const getAllFaqswithoutId = catchAsync(async (req, res, next) => {
                 ]
             };
         }
+
+        filter = withSoftDeleteFilter(filter, isDeleted);
 
         const faqs = await Faq.find(filter);
 

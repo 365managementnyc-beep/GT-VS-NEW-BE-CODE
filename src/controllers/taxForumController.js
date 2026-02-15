@@ -6,6 +6,7 @@ const joiError = require('../utils/joiError');
 const User = require('../models/users/User');
 const sendNotification = require('../utils/storeNotification');
 const Vendor = require('../models/users/Vendor');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const createTaxForum = catchAsync(async (req, res, next) => {
   const { businessName, taxClassification, taxId, deliveryForm, taxDocument } = req.body;
@@ -63,10 +64,11 @@ const getAllTaxForum = catchAsync(async (req, res, next) => {
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 10;
   const skip = (page - 1) * limit;
-  const { isDeleted = false, search } = req.query;
+  const { search } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
 
   // Build $match for search
-  const matchStage = { isDeleted };
+  let matchStage = {};
   if (search) {
     matchStage.$or = [
       { businessName: { $regex: search, $options: 'i' } },
@@ -85,6 +87,7 @@ const getAllTaxForum = catchAsync(async (req, res, next) => {
       { 'vendorId.email': { $regex: search, $options: 'i' } }
     ];
   }
+  matchStage = withSoftDeleteFilter(matchStage, isDeleted);
 
   const result = await TaxForum.aggregate([
     {

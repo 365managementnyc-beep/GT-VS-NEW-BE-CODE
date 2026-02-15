@@ -5,6 +5,7 @@ const { Permission, Task } = require('../models/Templete'); // Assuming you have
 const { templeteValidation,tasktempleteValidation } = require('../utils/joi/templeteValidation');
 const joiError = require('../utils/joiError');
 const APIFeatures = require('../utils/apiFeatures');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 
 
@@ -12,11 +13,13 @@ const APIFeatures = require('../utils/apiFeatures');
 /// //////////////////////////////////////permissions controller///////////////////////////////////////
 const getTempletes = catchAsync(async (req, res) => {
  
-    const { isDeleted=false, search } = req.query;
+    const { search } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
     const searchQuery = search ? { templateName: { $regex: search, $options: 'i' } } : {};
-    const APIFeature = new APIFeatures(Permission.find({ isDeleted, ...searchQuery }), req.query).paginate();
+    const query = withSoftDeleteFilter(searchQuery, isDeleted);
+    const APIFeature = new APIFeatures(Permission.find(query), req.query).paginate();
     const templetes = await APIFeature.query;
-    const totalTempletes = await Permission.countDocuments({ isDeleted, ...searchQuery });
+    const totalTempletes = await Permission.countDocuments(query);
 
     res.json({
         templetes,
@@ -28,8 +31,8 @@ const getTempletes = catchAsync(async (req, res) => {
 });
 const getTempleteNames = catchAsync(async (req, res) => {
 
-    const { isDeleted = false } = req.query;
-    const templates = await Permission.find({ isDeleted }).select('templateName');
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    const templates = await Permission.find(withSoftDeleteFilter({}, isDeleted)).select('templateName');
 
     res.status(200).json({
         templates,
@@ -205,11 +208,13 @@ const getTaskTempleteById = catchAsync(async (req, res) => {
     }
 });
 const getTaskTempletes = catchAsync(async (req, res) => {
-    const { isDeleted = false, search } = req.query;
+    const { search } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
     const searchQuery = search ? { templateName: { $regex: search, $options: 'i' } } : {};
-    const APIFeature = new APIFeatures(Task.find({ isDeleted, ...searchQuery }), req.query).paginate();
+    const query = withSoftDeleteFilter(searchQuery, isDeleted);
+    const APIFeature = new APIFeatures(Task.find(query), req.query).paginate();
     const templetes = await APIFeature.query;
-    const totalTempletes = await Task.countDocuments({ isDeleted, ...searchQuery });
+    const totalTempletes = await Task.countDocuments(query);
 
     res.json({
         templetes,
@@ -220,8 +225,8 @@ const getTaskTempletes = catchAsync(async (req, res) => {
 });
 
 const getTaskTemplateNames = catchAsync(async (req, res) => {
-    const { isDeleted = false } = req.query;
-    const templates = await Task.find({ isDeleted }).select('templateName assignedby');
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    const templates = await Task.find(withSoftDeleteFilter({}, isDeleted)).select('templateName assignedby');
 
     res.status(200).json({
         templates,

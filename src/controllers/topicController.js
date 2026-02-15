@@ -4,6 +4,7 @@ const Subtopic = require('../models/topic/Subtopic');
 const AppError = require('../utils/appError');
 const { topicSchema, subTopicSchema } = require('../utils/joi/topicValidation');
 const joiError = require('../utils/joiError');
+const { withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const createTopic = catchAsync(async (req, res, next) => {
     const { name, topicType } = req.body;
@@ -111,7 +112,7 @@ const getAllTopics = catchAsync(async (req, res, next) => {
     const filter = topicType ? { topicType: topicType } : {};
     const topics = await Topic.aggregate([
         {
-            $match: { isDeleted: false,...filter }
+            $match: withSoftDeleteFilter(filter, false)
         },
         {
             $lookup: {
@@ -123,7 +124,7 @@ const getAllTopics = catchAsync(async (req, res, next) => {
                             $expr: {
                                 $and: [
                                     { $eq: ['$topicId', '$$topicId'] },
-                                    { $eq: ['$isDeleted', false] }
+                                    { $ne: ['$isDeleted', true] }
                                 ]
                             }
                         }

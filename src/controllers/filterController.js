@@ -5,6 +5,7 @@ const AppError = require('../utils/appError');
 const catchAsync=require("../utils/catchAsync")
 const filterSchema=require("../utils/joi/filterValidation")
 const joiError=require("./../utils/joiError")
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 
 const createFilter=catchAsync(async(req,res,next)=>{
@@ -24,8 +25,8 @@ const createFilter=catchAsync(async(req,res,next)=>{
 
 const getAllfilterbyID=catchAsync(async(req,res)=>{
     const {id}=req.params;
-    const {isDeleted=false}=req.query;
-    const filters=await Filter.find({serviceCategory:id,isDeleted})
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    const filters=await Filter.find(withSoftDeleteFilter({ serviceCategory:id }, isDeleted))
     res.status(200).json({
         status:"success",
         results:filters.length,
