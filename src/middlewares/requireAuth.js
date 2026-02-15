@@ -3,8 +3,10 @@ const { promisify } = require('util');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const User = require('../models/users/User');
+const { connectDB } = require('../config/connectDb');
 
 module.exports = catchAsync(async (req, res, next) => {
+  await connectDB();
  
 
   const { authorization } = req.headers;
