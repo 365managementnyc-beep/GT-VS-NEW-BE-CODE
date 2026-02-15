@@ -4,7 +4,7 @@ const Customer = require('../models/users/Customer');
 const User = require('../models/users/User');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_ACCESS_KEY);
+const stripe = require('../config/stripe');
 const { requestSchema } = require('../utils/joi/requestValidation');
 const { createPaymentIntents } = require('../utils/stripe-utils/connect-accounts.util');
 const {
@@ -33,6 +33,7 @@ const { maintoConnect } = require('../utils/stripe-utils/stripe-transfer.util');
 const Payment = require('../models/Payment');
 const Extensionbooking = require('../models/Extensionbooking');
 const Discount = require('../models/PromoDiscountCode');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 const filter = (param) => {
   const { status, startDate, endDate, cancelRequest } = param;
@@ -635,7 +636,7 @@ const getAllBookingsForVendorService = catchAsync(async (req, res, next) => {
 });
 
 const getAllBookingsForCustomer = catchAsync(async (req, res, next) => {
-  const { isDeleted = false } = req.query;
+  const isDeleted = normalizeIsDeleted(req.query.isDeleted);
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const filerQuery = filter(req.query);
@@ -649,7 +650,7 @@ const getAllBookingsForCustomer = catchAsync(async (req, res, next) => {
       }
     : {};
   const query = [
-    { $match: { user: req.user?._id, isDeleted: isDeleted } },
+    { $match: withSoftDeleteFilter({ user: req.user?._id }, isDeleted) },
     ...filerQuery,
     ...bookingformat,
     {

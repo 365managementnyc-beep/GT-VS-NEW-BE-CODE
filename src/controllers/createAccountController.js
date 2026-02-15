@@ -1,7 +1,7 @@
 
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_ACCESS_KEY);
+const stripe = require('../config/stripe');
 
 
 // Create a new FAQ

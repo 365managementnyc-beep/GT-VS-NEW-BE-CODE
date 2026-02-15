@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_ACCESS_KEY);
+const stripe = require('../config/stripe');
 const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');

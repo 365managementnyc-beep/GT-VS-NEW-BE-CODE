@@ -1,10 +1,17 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_ACCESS_KEY);
+const stripe = require('../config/stripe');
 const Vendor = require('../models/users/Vendor');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
 // Stripe Webhook Controller
 exports.stripeWebhook = catchAsync(async (req, res, next) => {
+  if (!stripe) {
+    return res.status(503).json({
+      status: 'fail',
+      message: 'Stripe is not configured on this environment.'
+    });
+  }
+
   const sig = req.headers["stripe-signature"];
   let event;
   console.log("webhook triggered");
