@@ -5,11 +5,18 @@ const catchAsync = require('../utils/catchAsync');
 const { CountryValidation } = require('../utils/joi/countryValidation');
 const joiError = require('../utils/joiError');
 const { sendMailtoSuscribers } = require('../utils/sendNewsLetter');
+const { normalizeIsDeleted, withSoftDeleteFilter } = require('../utils/softDeleteFilter');
 
 // Get All Countries
 const getAllCountries = catchAsync(async (req, res) => {
-    const { isDeleted = false, search } = req.query;
-    const queryObj = { isDeleted };
+    const { search, status } = req.query;
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    let queryObj = {};
+
+    if (status) {
+        queryObj.status = status;
+    }
+
     if (search) {
         queryObj.$or = [
             { country: { $regex: search, $options: 'i' } },
@@ -17,6 +24,9 @@ const getAllCountries = catchAsync(async (req, res) => {
             { currency: { $regex: search, $options: 'i' } }
         ];
     }
+
+    queryObj = withSoftDeleteFilter(queryObj, isDeleted);
+
     const features = new APIFeatures(Country.find(queryObj), req.query).paginate();
     const countries = await features.query;
     const totalCountries = await Country.countDocuments(queryObj);
@@ -44,7 +54,9 @@ const createCountry = catchAsync(async (req, res, next) => {
     }
 
     // Check if country already exists
-    const existingCountry = await Country.findOne({ country, isDeleted: false });
+    const existingCountry = await Country.findOne({
+        ...withSoftDeleteFilter({ country }, false)
+    });
     if (existingCountry) {
         return next(new AppError('Country already exists', 400));
     }
@@ -122,8 +134,8 @@ const updateCountry = catchAsync(async (req, res, next) => {
 
 /// ///////////////////////get countries names///////////////////////////////////////
 const getCountriesNames = catchAsync(async (req, res) => {
-    const { isDeleted = false } = req.query;
-    const countries = await Country.find({ status: "Active", isDeleted: isDeleted }).select('country');
+    const isDeleted = normalizeIsDeleted(req.query.isDeleted);
+    const countries = await Country.find(withSoftDeleteFilter({ status: "Active" }, isDeleted)).select('country');
     return res.status(200).json({
         status: 'success',
         results: countries.length,
