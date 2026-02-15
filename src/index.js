@@ -124,13 +124,28 @@ try {
   console.error('Error loading auth strategies:', error.message);
 }
 
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    return res.status(500).json({
+      status: 'fail',
+      message: 'Database connection failed',
+      error: error.message
+    });
+  }
+});
+
 // Initialize routes
 routes(app);
 
-// Connect to database (non-blocking for serverless)
-connectDB().catch(err => {
-  console.error('MongoDB connection error:', err.message);
-});
+// Eagerly initialize connection in non-production to reduce first-request latency.
+if (process.env.NODE_ENV !== 'production') {
+  connectDB().catch(err => {
+    console.error('MongoDB connection error:', err.message);
+  });
+}
 
 // Start server only in non-serverless environment
 const PORT = process.env.PORT || 5000;
