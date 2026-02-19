@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/admin/reset.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/admin/reset",
+      "dest": "api/admin/reset.js"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "src/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "src/index.js"
+    }
+  ]
+}

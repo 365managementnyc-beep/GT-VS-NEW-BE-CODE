@@ -1,0 +1,469 @@
+{
+  "info": {
+    "name": "Client Review API",
+    "_postman_id": "client-review-api-collection-v2",
+    "description": "CRUD API for managing client reviews. Admin can create/update/delete reviews. Public endpoints for landing page display.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Public Endpoints",
+      "item": [
+        {
+          "name": "Get Landing Page Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/client-review/landing-page",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client-review", "landing-page"]
+            },
+            "description": "**Public endpoint for landing page**\n\nReturns ALL active client reviews without pagination. Perfect for displaying testimonials on the landing page.\n\n**Features:**\n- No pagination - returns all active reviews\n- Only active reviews (isActive: true, isDeleted: false)\n- Includes average rating calculation\n- Sorted by newest first\n- Returns only necessary fields"
+          },
+          "response": [
+            {
+              "name": "Success - Landing Page Reviews",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/client-review/landing-page",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review", "landing-page"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"results\": 25,\n  \"averageRating\": 4.6,\n  \"data\": {\n    \"clientReviews\": [\n      {\n        \"_id\": \"670123456789abcdef012345\",\n        \"rating\": 5,\n        \"description\": \"Excellent service! The team was professional and delivered beyond our expectations. Highly recommended!\",\n        \"clientName\": \"John Doe\",\n        \"imageKey\": \"client-reviews/john-doe.jpg\",\n        \"imageUrl\": \"https://example.com/images/john-doe.jpg\",\n        \"createdAt\": \"2025-10-11T12:00:00.000Z\"\n      },\n      {\n        \"_id\": \"670123456789abcdef012346\",\n        \"rating\": 5,\n        \"description\": \"Amazing experience! Will definitely use their services again.\",\n        \"clientName\": \"Jane Smith\",\n        \"imageKey\": \"client-reviews/jane-smith.jpg\",\n        \"imageUrl\": \"https://example.com/images/jane-smith.jpg\",\n        \"createdAt\": \"2025-10-10T15:30:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Client Reviews (With Pagination)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/client-review?page=1&limit=10&rating=5&isActive=true&sort=-createdAt&search=",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client-review"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "rating",
+                  "value": "5",
+                  "description": "Filter by rating (1-5)"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true",
+                  "description": "Filter by active status (true/false)"
+                },
+                {
+                  "key": "isDeleted",
+                  "value": "false",
+                  "description": "Include deleted reviews (default: false)"
+                },
+                {
+                  "key": "sort",
+                  "value": "-createdAt",
+                  "description": "Sort field (prefix with - for descending)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by client name or description"
+                }
+              ]
+            },
+            "description": "**Public endpoint with pagination**\n\nGet client reviews with pagination and filtering options. Useful for admin panels or review listing pages.\n\n**Query Parameters:**\n- `page`: Page number\n- `limit`: Items per page\n- `rating`: Filter by specific rating (1-5)\n- `isActive`: Filter by active status\n- `isDeleted`: Include deleted reviews\n- `search`: Search in client name or description\n- `sort`: Sort field (-createdAt for newest first)"
+          },
+          "response": [
+            {
+              "name": "Success - Paginated Reviews",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/client-review?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"results\": 10,\n  \"total\": 50,\n  \"page\": 1,\n  \"totalPages\": 5,\n  \"data\": {\n    \"clientReviews\": [\n      {\n        \"_id\": \"670123456789abcdef012345\",\n        \"rating\": 5,\n        \"description\": \"Excellent service!\",\n        \"clientName\": \"John Doe\",\n        \"imageKey\": \"client-reviews/john-doe.jpg\",\n        \"imageUrl\": \"https://example.com/images/john-doe.jpg\",\n        \"isDeleted\": false,\n        \"isActive\": true,\n        \"createdAt\": \"2025-10-11T12:00:00.000Z\",\n        \"updatedAt\": \"2025-10-11T12:00:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Single Client Review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/client-review/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client-review", "{{review_id}}"],
+              "variable": [
+                {
+                  "key": "review_id",
+                  "value": "670123456789abcdef012345",
+                  "description": "Client Review ID"
+                }
+              ]
+            },
+            "description": "**Public endpoint**\n\nGet a single client review by ID."
+          },
+          "response": [
+            {
+              "name": "Success - Single Review",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/client-review/670123456789abcdef012345",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review", "670123456789abcdef012345"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"data\": {\n    \"clientReview\": {\n      \"_id\": \"670123456789abcdef012345\",\n      \"rating\": 5,\n      \"description\": \"Excellent service!\",\n      \"clientName\": \"John Doe\",\n      \"imageKey\": \"client-reviews/john-doe.jpg\",\n      \"imageUrl\": \"https://example.com/images/john-doe.jpg\",\n      \"isDeleted\": false,\n      \"isActive\": true,\n      \"createdAt\": \"2025-10-11T12:00:00.000Z\",\n      \"updatedAt\": \"2025-10-11T12:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "Error - Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/client-review/invalid_id",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review", "invalid_id"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"fail\",\n  \"message\": \"Client review not found\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Public endpoints that don't require authentication. Perfect for displaying reviews on landing pages and public sections."
+    },
+    {
+      "name": "Admin Endpoints",
+      "item": [
+        {
+          "name": "Create Client Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "Admin authentication token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"description\": \"Excellent service! The team was professional and delivered beyond our expectations. Highly recommended for anyone looking for quality work!\",\n  \"clientName\": \"John Doe\",\n  \"imageKey\": \"client-reviews/john-doe-profile.jpg\",\n  \"imageUrl\": \"https://example.com/images/john-doe-profile.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/client-review",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client-review"]
+            },
+            "description": "**Admin Only**\n\nCreate a new client review.\n\n**Required Fields:**\n- `rating` (Number, 1-5): Client rating\n- `description` (String, max 1000 chars): Review description\n- `clientName` (String, max 100 chars): Client's name\n\n**Optional Fields:**\n- `imageKey` (String): S3 key for client image\n- `imageUrl` (String): Full URL to client image\n\n**Validation:**\n- Rating must be between 1 and 5\n- Description cannot exceed 1000 characters\n- Client name cannot exceed 100 characters\n- Image URL must be valid URL format"
+          },
+          "response": [
+            {
+              "name": "Success - Review Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rating\": 5,\n  \"description\": \"Excellent service!\",\n  \"clientName\": \"John Doe\",\n  \"imageKey\": \"client-reviews/john-doe.jpg\",\n  \"imageUrl\": \"https://example.com/images/john-doe.jpg\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/client-review",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Client review created successfully\",\n  \"data\": {\n    \"clientReview\": {\n      \"_id\": \"670123456789abcdef012345\",\n      \"rating\": 5,\n      \"description\": \"Excellent service!\",\n      \"clientName\": \"John Doe\",\n      \"imageKey\": \"client-reviews/john-doe.jpg\",\n      \"imageUrl\": \"https://example.com/images/john-doe.jpg\",\n      \"isDeleted\": false,\n      \"isActive\": true,\n      \"createdAt\": \"2025-10-13T12:00:00.000Z\",\n      \"updatedAt\": \"2025-10-13T12:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "Error - Validation Failed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rating\": 6,\n  \"description\": \"\",\n  \"clientName\": \"\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/client-review",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"fail\",\n  \"message\": \"Validation failed\",\n  \"errorFields\": {\n    \"rating\": \"Rating cannot exceed 5\",\n    \"description\": \"Description is required\",\n    \"clientName\": \"Client name is required\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Client Review",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "Admin authentication token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"description\": \"Updated description - Outstanding service and support!\",\n  \"clientName\": \"John Doe\",\n  \"imageKey\": \"client-reviews/john-doe-updated.jpg\",\n  \"imageUrl\": \"https://example.com/images/john-doe-updated.jpg\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/client-review/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client-review", "{{review_id}}"],
+              "variable": [
+                {
+                  "key": "review_id",
+                  "value": "670123456789abcdef012345",
+                  "description": "Client Review ID"
+                }
+              ]
+            },
+            "description": "**Admin Only**\n\nUpdate an existing client review.\n\n**All fields are optional** - only provided fields will be updated.\n\n**Updatable Fields:**\n- `rating` (Number, 1-5)\n- `description` (String, max 1000 chars)\n- `clientName` (String, max 100 chars)\n- `imageKey` (String)\n- `imageUrl` (String)\n- `isActive` (Boolean)\n\n**Note:** Cannot update a deleted review."
+          },
+          "response": [
+            {
+              "name": "Success - Review Updated",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rating\": 5,\n  \"description\": \"Updated description\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/client-review/670123456789abcdef012345",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review", "670123456789abcdef012345"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Client review updated successfully\",\n  \"data\": {\n    \"clientReview\": {\n      \"_id\": \"670123456789abcdef012345\",\n      \"rating\": 5,\n      \"description\": \"Updated description\",\n      \"clientName\": \"John Doe\",\n      \"imageKey\": \"client-reviews/john-doe.jpg\",\n      \"imageUrl\": \"https://example.com/images/john-doe.jpg\",\n      \"isDeleted\": false,\n      \"isActive\": true,\n      \"createdAt\": \"2025-10-13T12:00:00.000Z\",\n      \"updatedAt\": \"2025-10-13T14:30:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Client Review",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "description": "Admin authentication token"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/client-review/{{review_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client-review", "{{review_id}}"],
+              "variable": [
+                {
+                  "key": "review_id",
+                  "value": "670123456789abcdef012345",
+                  "description": "Client Review ID"
+                }
+              ]
+            },
+            "description": "**Admin Only**\n\nPermanently delete a client review from the database.\n\n**⚠️ Warning:** This is a hard delete - the review will be permanently removed and cannot be recovered."
+          },
+          "response": [
+            {
+              "name": "Success - Review Deleted",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/client-review/670123456789abcdef012345",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review", "670123456789abcdef012345"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Client review deleted successfully\",\n  \"data\": null\n}"
+            },
+            {
+              "name": "Error - Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{admin_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/client-review/invalid_id",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "client-review", "invalid_id"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "body": "{\n  \"status\": \"fail\",\n  \"message\": \"Client review not found\"\n}"
+            }
+          ]
+        }
+      ],
+      "description": "Protected endpoints that require admin authentication. Used for managing client reviews in the admin panel.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{admin_token}}",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string",
+      "description": "Admin JWT token for authentication"
+    },
+    {
+      "key": "review_id",
+      "value": "",
+      "type": "string",
+      "description": "Client Review ID for get/update/delete operations"
+    }
+  ]
+}
