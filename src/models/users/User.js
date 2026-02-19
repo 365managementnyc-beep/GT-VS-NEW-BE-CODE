@@ -296,7 +296,9 @@ userSchema.pre('save', async function (next) {
 
 userSchema.methods.comparePasswords = async function (comingPassword, userPassword) {
   // eslint-disable-next-line no-return-await
-  console.log('Comparing passwords:', comingPassword, userPassword);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Comparing passwords');
+  }
   return await bcrypt.compare(comingPassword, userPassword);
 };
 

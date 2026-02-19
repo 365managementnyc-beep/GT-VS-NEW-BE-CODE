@@ -2,11 +2,18 @@ require('dotenv').config();
 const { connectDB } = require('./src/config/connectDb');
 const Admin = require('./src/models/users/Admin');
 
+function getArg(name) {
+  const idx = process.argv.findIndex((a) => a === `--${name}`);
+  if (idx === -1) return undefined;
+  return process.argv[idx + 1];
+}
+
 (async function main() {
   try {
     await connectDB();
 
-    const email = 'admin12345@gala.test';
+    const email = getArg('email') || process.argv[2] || 'umairathar@fabtechsol.com';
+    const testPassword = getArg('password') || process.argv[3];
     
     const admin = await Admin.findOne({ email }).select('+password');
     
@@ -37,9 +44,12 @@ const Admin = require('./src/models/users/Admin');
     console.log('==========================================');
     
     // Test password
-    const testPassword = 'Adminaszx12345';
-    const isMatch = await admin.comparePasswords(testPassword, admin.password);
-    console.log('Password "Adminaszx12345" matches:', isMatch);
+    if (testPassword) {
+      const isMatch = await admin.comparePasswords(testPassword, admin.password);
+      console.log(`Password matches (${testPassword ? 'provided' : 'none'}):`, isMatch);
+    } else {
+      console.log('Password check: skipped (pass password as arg: node check-admin.js <email> <password> or --email/--password)');
+    }
     
     process.exit(0);
   } catch (err) {

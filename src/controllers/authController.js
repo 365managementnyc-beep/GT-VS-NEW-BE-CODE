@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('node:crypto');
 const { PhoneNumberFormat, PhoneNumberUtil } = require('google-libphonenumber');
-const { connectDB } = require('../config/connectDb');
 const User = require('../models/users/User');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -486,9 +485,8 @@ const resendOtpNumber = catchAsync(async (req, res, next) => {
 });
 
 const loginUser = catchAsync(async (req, res, next) => {
-  await connectDB();
-
   const { email, password } = req.body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
   const { error } = LoginSchema.validate(req.body, {
     abortEarly: false
@@ -519,7 +517,9 @@ const loginUser = catchAsync(async (req, res, next) => {
   //   );
   // }
 
-  const user = await User.findOne({ email }).populate({ path: 'templateId' }).select('+password');
+  const user = await User.findOne({ email: normalizedEmail })
+    .populate({ path: 'templateId' })
+    .select('+password');
 
   if (!user) {
     const fieldErrors = {
