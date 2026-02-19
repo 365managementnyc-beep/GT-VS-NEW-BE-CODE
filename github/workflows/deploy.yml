@@ -1,0 +1,38 @@
+name: pipeline for Galatab Backend to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEYS_GALATAB }}
+
+      - name: SSH into EC2 Server and deploy Galatab backend
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@ec2-16-170-205-246.eu-north-1.compute.amazonaws.com << EOF
+            set -e
+            cd /home/ubuntu/gala-tab-backend
+            echo "Pulling latest code..."
+            git fetch --all
+            git reset --hard origin/main
+            
+            # Install project dependencies
+            echo "Installing dependencies..."
+            npm install
+            
+            echo "Starting or restarting the PM2 process..."
+            pm2 stop all || true
+            pm2 start src/index.js --name "gala-tab-backend"
+            echo "Deployment complete!"
+          EOF
