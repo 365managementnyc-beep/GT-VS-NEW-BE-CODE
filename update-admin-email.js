@@ -6,33 +6,27 @@ const Admin = require('./src/models/users/Admin');
   try {
     await connectDB();
 
-    const oldEmail = 'admin@local.test';
+    const oldEmail = 'UMAIR.ATHAR@FABTECHSOL.COM';
     const newEmail = 'keepingupwiththejonezez@gmail.com';
 
-    // Find admin by old email or by role
     let admin = await Admin.findOne({ email: oldEmail });
-    
-    if (!admin) {
-      // If not found by old email, find any admin
-      admin = await Admin.findOne({ role: 'admin', adminRole: 'admin' });
-    }
 
     if (!admin) {
-      console.log('No admin found to update');
+      console.log('No admin found with email:', oldEmail);
       process.exit(1);
     }
 
     console.log('Found admin:', admin.email);
-    
-    // Update email
+
     admin.email = newEmail;
     admin.status = 'Active';
-    
+
     await admin.save({ validateBeforeSave: false });
-    
+
     console.log('Admin email updated successfully!');
+    console.log('Old Email:', oldEmail);
     console.log('New Email:', newEmail);
-    console.log('Password: Admin@12345');
+    console.log('Password: unchanged');
     
     process.exit(0);
   } catch (err) {
