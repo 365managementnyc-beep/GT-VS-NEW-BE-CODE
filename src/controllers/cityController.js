@@ -124,7 +124,7 @@ const updateCity = catchAsync(async (req, res, next) => {
 /// //////////////////////////////////////get cities names///////////////////////////////////////
 const getCitiesNames = catchAsync(async (req, res) => {
     const isDeleted = normalizeIsDeleted(req.query.isDeleted);
-    const cities = await City.find(withSoftDeleteFilter({ status:"Active" }, isDeleted)).select('city country');
+    const cities = await City.find(withSoftDeleteFilter({ status:"Active" }, isDeleted)).select('city country province');
     return res.status(200).json({
         status: 'success',
         results: cities.length,
