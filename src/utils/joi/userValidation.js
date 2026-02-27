@@ -59,6 +59,8 @@ const registerUserSchema = Joi.object({
     'any.required': 'city is required.'
   }),
 
+  state: Joi.string().optional().allow(''),
+
   country: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required().messages({
     'any.required': 'country is required.'
   }),
@@ -119,7 +121,11 @@ const validateUserProfile = (data, options = { partial: false }) => {
       .messages({
         'any.required': 'city is required.'
       }),
-  
+
+    state: Joi.string()
+      .allow('')
+      .optional(),
+
     country: Joi.string()
       .pattern(/^[0-9a-fA-F]{24}$/)
       .allow('')
