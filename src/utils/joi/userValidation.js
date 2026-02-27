@@ -55,7 +55,7 @@ const registerUserSchema = Joi.object({
     'any.required': 'Country name is required.'
   }),
 
-  city: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required().messages({
+  city: Joi.string().required().messages({
     'any.required': 'city is required.'
   }),
 
@@ -114,7 +114,6 @@ const validateUserProfile = (data, options = { partial: false }) => {
         'any.required': 'Contact number is required'
       }),
     city: Joi.string()
-      .pattern(/^[0-9a-fA-F]{24}$/)
       .allow('')
       .when('$partial', { is: false, then: Joi.required() })
       .messages({

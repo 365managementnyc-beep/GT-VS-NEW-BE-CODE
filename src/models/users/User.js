@@ -194,8 +194,8 @@ const userSchema = new Schema(
       type: String
     },
     city: {
-      type: Schema.Types.ObjectId,
-      ref: 'City'
+      type: String,
+      trim: true
     },
     country: {
       type: Schema.Types.ObjectId,
