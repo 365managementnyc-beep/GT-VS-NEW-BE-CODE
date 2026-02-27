@@ -594,16 +594,6 @@ const getMe = catchAsync(async (req, res, next) => {
       }
     },
     { $unwind: { path: '$country', preserveNullAndEmptyArrays: true } },
-    // City lookup
-    {
-      $lookup: {
-        from: 'cities',
-        localField: 'city',
-        foreignField: '_id',
-        as: 'city'
-      }
-    },
-    { $unwind: { path: '$city', preserveNullAndEmptyArrays: true } },
     // Final projection
     {
       $project: {
@@ -755,15 +745,6 @@ const getUser = catchAsync(async (req, res, next) => {
         _id: new mongoose.Types.ObjectId(userId)
       }
     },
-    {
-      $lookup: {
-        from: 'cities',
-        localField: 'city',
-        foreignField: '_id',
-        as: 'city'
-      }
-    },
-    { $unwind: { path: '$city', preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
         from: 'countries',
