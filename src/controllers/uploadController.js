@@ -1,3 +1,4 @@
+const multer = require('multer');
 const {
   initiateMultipartUpload,
   createPresignedUrl,
@@ -5,8 +6,23 @@ const {
   completeMultipartUpload,
   generateDownloadUrl,
   hasAwsCredentials,
-  getPresignedPutUrl
+  getPresignedPutUrl,
+  uploadFileToS3
 } = require('../middlewares/aws-v3');
+
+// Multer memory storage for direct S3 upload (max 10MB)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG and WebP images are allowed'));
+    }
+  }
+});
+const uploadMiddleware = upload.single('image');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const {
@@ -189,6 +205,25 @@ const getPresignedPut = catchAsync(async (req, res, next) => {
   return res.status(200).json({ success: true, uploadUrl, fileUrl });
 });
 
+// Direct server-side upload: receives file via multipart/form-data, uploads to S3, returns URL
+const uploadImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next(new AppError('No image file provided', 400));
+    }
+    if (!useAwsUpload) {
+      return next(new AppError('File uploads require AWS S3 configuration', 500));
+    }
+    const ext = req.file.originalname.split('.').pop();
+    const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const fileUrl = await uploadFileToS3(req.file.buffer, uniqueName, req.file.mimetype);
+    return res.status(200).json({ success: true, url: fileUrl });
+  } catch (err) {
+    console.error('uploadImage error:', err);
+    return next(new AppError(err.message || 'Upload failed', 500));
+  }
+};
+
 module.exports = {
   generatePresignedUrl,
   initiateUpload,
@@ -196,5 +231,7 @@ module.exports = {
   uploadChunk,
   handleLocalChunkUpload,
   downloadAwsObject,
-  getPresignedPut
+  getPresignedPut,
+  uploadImage,
+  uploadMiddleware
 };

@@ -5,15 +5,20 @@ const {
   generatePresignedUrl,
   completeUpload,
   handleLocalChunkUpload,
-  getPresignedPut
+  getPresignedPut,
+  uploadImage,
+  uploadMiddleware
 } = require('../controllers/uploadController');
 
 
 const router = express.Router();
 
-console.log('[uploadRoute] registering routes including /presigned-put');
+console.log('[uploadRoute] routes registered: /upload-image, /presigned-put, /initiate-upload');
 
-// Simple single-file upload via presigned PUT (recommended for profile pictures)
+// Direct server-side upload (most reliable — no browser-to-S3 CORS issues)
+router.post('/upload-image', requireAuth, uploadMiddleware, uploadImage);
+
+// Simple single-file upload via presigned PUT
 router.post('/presigned-put', requireAuth, getPresignedPut);
 
 // Multipart upload (for large files)

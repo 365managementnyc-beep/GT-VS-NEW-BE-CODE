@@ -140,6 +140,22 @@ const generateDownloadUrl = async (key) => {
 };
 
 /**
+ * Upload a file buffer directly to S3 from the server (no presigned URL needed).
+ * Returns the permanent S3 object URL.
+ */
+const uploadFileToS3 = async (buffer, fileName, contentType) => {
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: fileName,
+    Body: buffer,
+    ContentType: contentType,
+  });
+  await s3Client.send(command);
+  const region = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
+  return `https://${bucketName}.s3.${region}.amazonaws.com/${fileName}`;
+};
+
+/**
  * Generate a presigned URL for a simple single PUT upload (for small files like profile pictures).
  * Returns { uploadUrl, fileUrl } where fileUrl is the permanent S3 object URL.
  */
@@ -179,5 +195,6 @@ module.exports = {
   generateDownloadUrl,
   deleteMedia,
   hasAwsCredentials,
-  getPresignedPutUrl
+  getPresignedPutUrl,
+  uploadFileToS3
 };
