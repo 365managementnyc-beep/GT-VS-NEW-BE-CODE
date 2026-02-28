@@ -149,7 +149,6 @@ const registerUser = catchAsync(async (req, res, next) => {
     newUser = new Admins(UserData);
     await newUser.save({ validateBeforeSave: false });
   }
-  console.log('[registerUser DEBUG] saved state:', newUser?.state, '| city:', newUser?.city, '| body.state:', req.body.state);
   res.locals.dataId = newUser._id;
   res.locals.actor = newUser;
 
