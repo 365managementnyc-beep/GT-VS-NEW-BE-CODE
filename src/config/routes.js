@@ -49,8 +49,22 @@ module.exports = (app) => {
   app.post('/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
   app.use(express.json({ limit: '30mb' }));
 
-  // Health check — required by Render to confirm successful deploy
+  // Root + health check + test-db — registered after CORS so all origins get the headers
+  app.get('/', (req, res) => res.status(200).json({ status: 'success', message: 'Gala Tab API is running' }));
   app.get('/api/health', (req, res) => res.status(200).json({ status: 'ok' }));
+  app.get('/api/test-db', async (req, res) => {
+    try {
+      const mongoose = require('mongoose');
+      const connectionState = mongoose.connection.readyState;
+      const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+      if (connectionState !== 1) await require('../config/connectDb').connectDB();
+      const Admin = require('../models/users/Admin');
+      const adminCount = await Admin.countDocuments({});
+      res.status(200).json({ status: 'success', connection: states[connectionState], adminCount });
+    } catch (error) {
+      res.status(500).json({ status: 'fail', error: error.message });
+    }
+  });
 
   app.use('/api/auth', authRoute);
   app.use("/api/message", messageRoute);
