@@ -49,7 +49,6 @@ const initiateMultipartUpload = async (fileName, fileType) => {
     Bucket: bucketName,
     Key: fileName,
     ContentType: fileType,
-    ACL: 'public-read'
   });
   const response = await s3Client.send(command);
   return { uploadId: response.UploadId };
@@ -62,8 +61,6 @@ const createPresignedUrl = async (fileName, uploadId, partNumber, filetype) => {
     UploadId: uploadId,
     PartNumber: partNumber,
     ContentType: filetype,
-    ACL: 'public-read',
-    Expires: 3600 // 1 hour
   });
   try {
     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL valid for 1 hour
@@ -84,7 +81,6 @@ const uploadPart = async (index, fileName, fileBuffer, uploadId, fileType) => {
     PartNumber: Number(index) + 1,
     Body: fileBuffer,
     ContentType: fileType,
-    ACL: 'public-read'
   });
   return s3Client.send(command);
 };
@@ -96,7 +92,6 @@ const completeMultipartUpload = async (filename, uploadId) => {
     Bucket: bucketName,
     Key: filename,
     UploadId: uploadId,
-    ACL: 'public-read'
   });
 
   try {
@@ -133,7 +128,6 @@ const generateDownloadUrl = async (key) => {
   const command = new GetObjectCommand({
     Bucket: bucketName,
     Key: key,
-    ACL: 'public-read'
   });
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 };
