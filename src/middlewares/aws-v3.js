@@ -7,7 +7,8 @@ const {
   GetObjectCommand,
   ListPartsCommand,
   DeleteObjectCommand,
-  PutObjectCommand
+  PutObjectCommand,
+  GetBucketLocationCommand
 } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
@@ -37,6 +38,7 @@ if (hasAwsCredentials()) {
   console.log('[AWS] Access Key ID (first 8 chars):', (process.env.AWS_ACCESS_KEY_ID || '').substring(0, 8));
   s3Client = new S3Client({
     region,
+    followRegionRedirects: true, // automatically follow redirects if bucket is in a different region
     credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID.trim(),
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY.trim()
@@ -47,6 +49,23 @@ if (hasAwsCredentials()) {
 const bucketName = process.env.AWS_STORAGE_BUCKET_NAME;
 // eslint-disable-next-line no-unused-vars
 const AWSRegion = process.env.REGION;
+
+// Cache the actual bucket region (detected on first upload)
+let _resolvedBucketRegion = null;
+const getBucketRegion = async () => {
+  if (_resolvedBucketRegion) return _resolvedBucketRegion;
+  try {
+    const cmd = new GetBucketLocationCommand({ Bucket: bucketName });
+    const res = await s3Client.send(cmd);
+    // us-east-1 is returned as null by AWS
+    _resolvedBucketRegion = res.LocationConstraint || 'us-east-1';
+    console.log('[AWS] Detected bucket region:', _resolvedBucketRegion);
+  } catch (e) {
+    _resolvedBucketRegion = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
+    console.warn('[AWS] Could not detect bucket region, using:', _resolvedBucketRegion, e.message);
+  }
+  return _resolvedBucketRegion;
+};
 
 
 const initiateMultipartUpload = async (fileName, fileType) => {
@@ -141,7 +160,7 @@ const generateDownloadUrl = async (key) => {
 
 /**
  * Upload a file buffer directly to S3 from the server (no presigned URL needed).
- * Returns the permanent S3 object URL.
+ * Returns the permanent S3 object URL derived from the response location.
  */
 const uploadFileToS3 = async (buffer, fileName, contentType) => {
   const command = new PutObjectCommand({
@@ -151,7 +170,8 @@ const uploadFileToS3 = async (buffer, fileName, contentType) => {
     ContentType: contentType,
   });
   await s3Client.send(command);
-  const region = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
+  // Detect actual bucket region for correct URL
+  const region = await getBucketRegion();
   return `https://${bucketName}.s3.${region}.amazonaws.com/${fileName}`;
 };
 
