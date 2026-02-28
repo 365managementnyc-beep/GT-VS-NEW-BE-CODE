@@ -1,4 +1,5 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -6,17 +7,17 @@ const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/connectDb');
 const configMiddlewares = require('./config/configMiddlewares');
 const routes = require('./config/routes');
+const { initializeSocket } = require('./utils/socket');
 
-// Disable cron jobs for serverless deployment (Vercel)
-// These should be run via Vercel Cron Jobs or external schedulers
+// Cron jobs – uncomment if running on a persistent server (Render/Railway)
 // require("./utils/updateRequest");
 // require("./utils/VendorPayout");
 // require("./utils/checkstripebalance");
 // require("./utils/PayoutCrone");
 // require("./utils/autoDeleteOldPendingBookings");
 
-
 const app = express();
+const server = http.createServer(app);
 
 // Health check route - must be first
 // Updated: Force redeploy to apply file upload fix
@@ -140,22 +141,26 @@ app.use('/api', async (req, res, next) => {
 // Initialize routes
 routes(app);
 
-// Eagerly initialize connection in non-production to reduce first-request latency.
-if (process.env.NODE_ENV !== 'production') {
-  connectDB().catch(err => {
-    console.error('MongoDB connection error:', err.message);
-  });
-}
+// Initialize Socket.io on the HTTP server
+initializeSocket(server);
 
-// Start server only in non-serverless environment
 const PORT = process.env.PORT || 5000;
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
 
-// Export for Vercel serverless
+// Connect to MongoDB then start listening
+connectDB()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err.message);
+    // Still start server so health checks pass even if DB is momentarily down
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT} (DB connection pending)`);
+    });
+  });
+
 module.exports = app;
 
 
