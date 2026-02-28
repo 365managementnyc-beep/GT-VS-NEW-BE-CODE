@@ -58,16 +58,18 @@ const initiateMultipartUpload = async (fileName, fileType) => {
   return { uploadId: response.UploadId };
 };
 
-const createPresignedUrl = async (fileName, uploadId, partNumber, filetype) => {
+const createPresignedUrl = async (fileName, uploadId, partNumber) => {
+  // NOTE: Do NOT include ContentType here — it becomes a required signed header
+  // and causes "SignatureDoesNotMatch" when the browser uploads the part.
+  // ContentType is already set on the multipart upload itself.
   const command = new UploadPartCommand({
     Bucket: bucketName,
     Key: fileName,
     UploadId: uploadId,
     PartNumber: partNumber,
-    ContentType: filetype,
   });
   try {
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL valid for 1 hour
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
     return url;
   } catch (error) {
     console.log(error);
