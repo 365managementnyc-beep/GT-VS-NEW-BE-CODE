@@ -128,6 +128,7 @@ const registerUser = catchAsync(async (req, res, next) => {
     ...req.body,
     contact: normalizedContact
   };
+  console.log('[registerUser] city:', UserData.city, '| state:', UserData.state);
   const validRoles = [roles.ADMIN, roles.VENDOR, roles.CUSTOMER];
   const userRole = UserData?.role?.toLowerCase();
   if (!validRoles.includes(userRole)) {
