@@ -65,8 +65,8 @@ try {
 }
 
 app.use('/api', async (req, res, next) => {
-  // Health check must never depend on DB — skip connectDB for it
-  if (req.path === '/health') return next();
+  // These routes don't need DB — skip connectDB entirely
+  if (req.path === '/health' || req.path.startsWith('/upload/')) return next();
   try {
     await connectDB();
     next();
