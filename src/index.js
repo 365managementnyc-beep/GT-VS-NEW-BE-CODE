@@ -65,6 +65,8 @@ try {
 }
 
 app.use('/api', async (req, res, next) => {
+  // Health check must never depend on DB — skip connectDB for it
+  if (req.path === '/health') return next();
   try {
     await connectDB();
     next();
@@ -86,6 +88,14 @@ initializeSocket(server);
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB then start listening
+const requiredEnv = ['JWT_SECRET', 'MONGO_URI', 'OTP_SECRET'];
+const missingEnv = requiredEnv.filter(k => !process.env[k]);
+if (missingEnv.length) {
+  console.error('⚠️  MISSING REQUIRED ENV VARS:', missingEnv.join(', '));
+} else {
+  console.log('✅ All required env vars present');
+}
+
 connectDB()
   .then(() => {
     server.listen(PORT, () => {
