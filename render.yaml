@@ -12,3 +12,53 @@ services:
         value: production
       - key: PORT
         value: 10000
+
+      # MongoDB — set in Render dashboard
+      - key: MONGO_URI
+        sync: false
+
+      # JWT
+      - key: JWT_SECRET
+        value: your_jwt_secret_key_change_this_in_production
+      - key: JWT_EXPIRES_IN
+        value: 90d
+
+      # OTP
+      - key: OTP_SECRET
+        value: change_this_to_a_random_value
+
+      # Session
+      - key: SESSION_SECRET
+        value: gala_tab_session_secret_2024
+
+      # Frontend URL
+      - key: FRONTEND_URL
+        value: https://gt-vs-new-fe-code.vercel.app
+
+      # Email
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_HOST_USER
+        value: galatablead@gmail.com
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: EMAIL_FROM_CONFIG
+        value: "Gala Tab <galatablead@gmail.com>"
+      - key: EMAIL_FROM
+        value: noreply@galatab.com
+
+      # AWS S3 — set in Render dashboard (never commit real keys)
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_STORAGE_BUCKET_NAME
+        value: galatabbucket1dev
+      - key: REGION
+        value: us-east-2
+
+      # Stripe — set in Render dashboard
+      - key: STRIPE_PUBLIC_KEY
+        sync: false
+      - key: STRIPE_SECRET_ACCESS_KEY
+        sync: false
