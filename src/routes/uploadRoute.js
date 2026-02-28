@@ -11,6 +11,8 @@ const {
 
 const router = express.Router();
 
+console.log('[uploadRoute] registering routes including /presigned-put');
+
 // Simple single-file upload via presigned PUT (recommended for profile pictures)
 router.post('/presigned-put', requireAuth, getPresignedPut);
 
