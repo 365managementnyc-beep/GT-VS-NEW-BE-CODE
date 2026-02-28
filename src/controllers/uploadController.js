@@ -4,7 +4,8 @@ const {
   uploadPart,
   completeMultipartUpload,
   generateDownloadUrl,
-  hasAwsCredentials
+  hasAwsCredentials,
+  getPresignedPutUrl
 } = require('../middlewares/aws-v3');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -116,7 +117,6 @@ const completeUpload = catchAsync(async (req, res, next) => {
     uploadMode: useAwsUpload ? 'aws' : 'local'
   });
 });
-
 const uploadChunk = catchAsync(async (req, res, next) => {
   const { index, fileName, filetype } = req.body;
   const { uploadId } = req.query;
@@ -176,11 +176,25 @@ const downloadAwsObject = catchAsync(async (req, res, next) => {
   return res.status(200).json({ success: true, url });
 });
 
+const getPresignedPut = catchAsync(async (req, res, next) => {
+  const { fileName, filetype } = req.body;
+  if (!fileName || !filetype) {
+    return next(new AppError('fileName and filetype are required', 400));
+  }
+  if (!useAwsUpload) {
+    return next(new AppError('File uploads require AWS S3 configuration', 500));
+  }
+  const uniqueName = `${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+  const { uploadUrl, fileUrl } = await getPresignedPutUrl(uniqueName, filetype);
+  return res.status(200).json({ success: true, uploadUrl, fileUrl });
+});
+
 module.exports = {
   generatePresignedUrl,
   initiateUpload,
   completeUpload,
   uploadChunk,
   handleLocalChunkUpload,
-  downloadAwsObject
+  downloadAwsObject,
+  getPresignedPut
 };

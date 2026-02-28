@@ -6,7 +6,8 @@ const {
   CompleteMultipartUploadCommand,
   GetObjectCommand,
   ListPartsCommand,
-  DeleteObjectCommand
+  DeleteObjectCommand,
+  PutObjectCommand
 } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
@@ -138,7 +139,21 @@ const generateDownloadUrl = async (key) => {
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 };
 
-
+/**
+ * Generate a presigned URL for a simple single PUT upload (for small files like profile pictures).
+ * Returns { uploadUrl, fileUrl } where fileUrl is the permanent S3 object URL.
+ */
+const getPresignedPutUrl = async (fileName, fileType) => {
+  const command = new PutObjectCommand({
+    Bucket: bucketName,
+    Key: fileName,
+    ContentType: fileType,
+  });
+  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+  const region = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
+  const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${fileName}`;
+  return { uploadUrl, fileUrl };
+};
 
 const deleteMedia = async (key) => {
   
@@ -163,5 +178,6 @@ module.exports = {
   completeMultipartUpload,
   generateDownloadUrl,
   deleteMedia,
-  hasAwsCredentials
+  hasAwsCredentials,
+  getPresignedPutUrl
 };
