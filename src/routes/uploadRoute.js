@@ -7,13 +7,17 @@ const {
   handleLocalChunkUpload,
   getPresignedPut,
   uploadImage,
-  uploadMiddleware
+  uploadMiddleware,
+  awsStatus
 } = require('../controllers/uploadController');
 
 
 const router = express.Router();
 
 console.log('[uploadRoute] routes registered: /upload-image, /presigned-put, /initiate-upload');
+
+// AWS config status (no secrets) — for debugging
+router.get('/aws-status', awsStatus);
 
 // Direct server-side upload (most reliable — no browser-to-S3 CORS issues)
 router.post('/upload-image', requireAuth, uploadMiddleware, uploadImage);

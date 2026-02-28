@@ -205,22 +205,43 @@ const getPresignedPut = catchAsync(async (req, res, next) => {
   return res.status(200).json({ success: true, uploadUrl, fileUrl });
 });
 
+// AWS config status check (no secrets exposed)
+const awsStatus = (req, res) => {
+  const accessKey = process.env.AWS_ACCESS_KEY_ID || '';
+  const bucket = process.env.AWS_STORAGE_BUCKET_NAME || '';
+  const region = process.env.REGION || process.env.AWS_REGION || '';
+  return res.status(200).json({
+    success: true,
+    aws: {
+      configured: useAwsUpload,
+      accessKeyPresent: !!accessKey,
+      accessKeyPrefix: accessKey ? accessKey.substring(0, 8) : 'NOT SET',
+      bucket: bucket || 'NOT SET',
+      region: region || 'NOT SET',
+    }
+  });
+};
+
 // Direct server-side upload: receives file via multipart/form-data, uploads to S3, returns URL
 const uploadImage = async (req, res, next) => {
   try {
+    console.log('[uploadImage] called, file:', req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'MISSING');
+    console.log('[uploadImage] useAwsUpload:', useAwsUpload);
     if (!req.file) {
-      return next(new AppError('No image file provided', 400));
+      return next(new AppError('No image file provided. Make sure field name is "image"', 400));
     }
     if (!useAwsUpload) {
-      return next(new AppError('File uploads require AWS S3 configuration', 500));
+      return next(new AppError('AWS S3 is not configured on this server. Check AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME env vars on Render.', 500));
     }
     const ext = req.file.originalname.split('.').pop();
-    const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const uniqueName = `profiles/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    console.log('[uploadImage] uploading to S3 key:', uniqueName);
     const fileUrl = await uploadFileToS3(req.file.buffer, uniqueName, req.file.mimetype);
+    console.log('[uploadImage] success, url:', fileUrl);
     return res.status(200).json({ success: true, url: fileUrl });
   } catch (err) {
-    console.error('uploadImage error:', err);
-    return next(new AppError(err.message || 'Upload failed', 500));
+    console.error('[uploadImage] error:', err.name, err.message);
+    return next(new AppError(`Upload failed: ${err.message}`, 500));
   }
 };
 
@@ -233,5 +254,6 @@ module.exports = {
   downloadAwsObject,
   getPresignedPut,
   uploadImage,
-  uploadMiddleware
+  uploadMiddleware,
+  awsStatus
 };
