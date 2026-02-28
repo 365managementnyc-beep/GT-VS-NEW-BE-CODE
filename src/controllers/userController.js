@@ -611,6 +611,8 @@ const getMe = catchAsync(async (req, res, next) => {
     return next(new AppError('User not found', 404, { user: 'user not found' }));
   }
 
+  console.log('[getMe] state:', user[0].state, '| city:', user[0].city);
+
   return res.status(200).json({
     status: 'success',
     data: user[0]
