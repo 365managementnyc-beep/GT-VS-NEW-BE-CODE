@@ -221,6 +221,36 @@ const deleteMedia = async (key) => {
   }
 };
 
+/**
+ * Live connectivity test — calls GetBucketLocation to verify credentials work.
+ * Returns a plain object (never throws) suitable for a debug HTTP endpoint.
+ */
+const testAwsConnection = async () => {
+  const keyId = (process.env.AWS_ACCESS_KEY_ID || '').trim();
+  const secret = (process.env.AWS_SECRET_ACCESS_KEY || '').trim();
+  const region = (process.env.REGION || process.env.AWS_REGION || 'NOT SET').trim();
+  const bucket = (process.env.AWS_STORAGE_BUCKET_NAME || '').trim();
+  const info = {
+    keyIdPrefix: keyId.substring(0, 8),
+    keyIdSuffix: keyId.slice(-4),
+    keyIdLength: keyId.length,
+    secretLength: secret.length,
+    secretSuffix: secret.slice(-4),
+    region,
+    bucket,
+  };
+  if (!keyId || !secret || !bucket) {
+    return { success: false, error: 'Missing credentials', ...info };
+  }
+  try {
+    const cmd = new GetBucketLocationCommand({ Bucket: bucket });
+    const res = await getS3Client().send(cmd);
+    return { success: true, bucketRegion: res.LocationConstraint || 'us-east-1', ...info };
+  } catch (err) {
+    return { success: false, error: err.message, errorCode: err.name, ...info };
+  }
+};
+
 module.exports = {
   initiateMultipartUpload,
   createPresignedUrl,
@@ -230,5 +260,6 @@ module.exports = {
   deleteMedia,
   hasAwsCredentials,
   getPresignedPutUrl,
-  uploadFileToS3
+  uploadFileToS3,
+  testAwsConnection
 };

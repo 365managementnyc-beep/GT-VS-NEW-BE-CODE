@@ -11,6 +11,7 @@ const {
   uploadMiddleware,
   awsStatus
 } = require('../controllers/uploadController');
+const { testAwsConnection } = require('../middlewares/aws-v3');
 
 
 const router = express.Router();
@@ -19,6 +20,12 @@ console.log('[uploadRoute] routes registered: /upload-image, /presigned-put, /in
 
 // AWS config status (no secrets) — for debugging
 router.get('/aws-status', awsStatus);
+
+// Live AWS connectivity test — actually calls S3 to verify the credentials work
+router.get('/aws-test', async (req, res) => {
+  const result = await testAwsConnection();
+  return res.status(result.success ? 200 : 500).json(result);
+});
 
 // Token debug endpoint — diagnose JWT verification issues
 router.get('/test-token', (req, res) => {
