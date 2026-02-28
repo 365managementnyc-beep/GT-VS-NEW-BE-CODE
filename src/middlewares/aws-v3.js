@@ -30,11 +30,15 @@ let s3Client = null;
 
 // Only initialize S3Client if credentials are available
 if (hasAwsCredentials()) {
+  const region = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
+  console.log('[AWS] Initializing S3Client with region:', region);
+  console.log('[AWS] Bucket:', process.env.AWS_STORAGE_BUCKET_NAME);
+  console.log('[AWS] Access Key ID (first 8 chars):', (process.env.AWS_ACCESS_KEY_ID || '').substring(0, 8));
   s3Client = new S3Client({
-    region: process.env.REGION,
+    region,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID.trim(),
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY.trim()
     }
   });
 }
