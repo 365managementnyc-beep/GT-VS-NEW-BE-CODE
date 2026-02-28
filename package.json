@@ -13,7 +13,7 @@
     "gen-api": "node src/utils/generateApi.js",
     "prettier": "prettier --write \"src/**/*.js\"",
     "lint": "eslint --fix .",
-    "prepare": "husky install",
+    "prepare": "node -e \"if(process.env.NODE_ENV !== 'production') require('child_process').execSync('husky install')\"",
     "format": "prettier --write ."
   },
   "husky": {
