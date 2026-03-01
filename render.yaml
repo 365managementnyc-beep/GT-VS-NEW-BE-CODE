@@ -8,46 +8,54 @@ services:
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
+      # ── Server ──────────────────────────────────────────────────────────────
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: BACKEND_URL
+        value: https://gt-vs-new-be-code.onrender.com
+      - key: API_URL
+        value: https://gt-vs-new-be-code.onrender.com/api
+      - key: FRONTEND_URL
+        value: https://gt-vs-new-fe-code.vercel.app
 
-      # MongoDB — set in Render dashboard
+      # ── MongoDB ──────────────────────────────────────────────────────────────
       - key: MONGO_URI
-        sync: false
+        value: mongodb+srv://user1:passwordaszx12345@gtcluster1.aazvtak.mongodb.net/gala_tab
 
-      # JWT
+      # ── JWT ──────────────────────────────────────────────────────────────────
       - key: JWT_SECRET
         value: your_jwt_secret_key_change_this_in_production
       - key: JWT_EXPIRES_IN
         value: 90d
+      - key: ADMIN_RESET_SECRET
+        value: admin_reset_secret_2024
 
-      # OTP
+      # ── OTP / Session ────────────────────────────────────────────────────────
       - key: OTP_SECRET
         value: change_this_to_a_random_value
-
-      # Session
       - key: SESSION_SECRET
         value: gala_tab_session_secret_2024
 
-      # Frontend URL
-      - key: FRONTEND_URL
-        value: https://gt-vs-new-fe-code.vercel.app
-
-      # Email
+      # ── Email (Gmail SMTP) ───────────────────────────────────────────────────
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_HOST_USER
         value: galatablead@gmail.com
       - key: EMAIL_HOST_PASSWORD
-        sync: false
+        value: scie ghnl kyyd qcmd
       - key: EMAIL_FROM_CONFIG
         value: "Gala Tab <galatablead@gmail.com>"
       - key: EMAIL_FROM
-        value: noreply@galatab.com
+        value: galatablead@gmail.com
+      - key: NOTIFICATION_EMAIL
+        value: galatablead@gmail.com
+      - key: SUPPORT_TEAM_EMAIL
+        value: galatablead@gmail.com
 
-      # AWS S3 — set in Render dashboard (never commit real keys)
+      # ── AWS S3 ───────────────────────────────────────────────────────────────
+      # Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY manually in Render dashboard
       - key: AWS_ACCESS_KEY_ID
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
@@ -56,9 +64,37 @@ services:
         value: galatabbucket1dev
       - key: REGION
         value: us-east-2
+      - key: AWS_REGION
+        value: us-east-2
 
-      # Stripe — set in Render dashboard
-      - key: STRIPE_PUBLIC_KEY
-        sync: false
+      # ── Stripe ───────────────────────────────────────────────────────────────
       - key: STRIPE_SECRET_ACCESS_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # ── Google OAuth ─────────────────────────────────────────────────────────
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://gt-vs-new-be-code.onrender.com/api/auth/login/google/callback
+      - key: GOOGLE_ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_TIMEZONE
+        value: America/New_York
+
+      # ── Facebook OAuth ───────────────────────────────────────────────────────
+      - key: FB_CLIENT_ID
+        sync: false
+      - key: FB_CLIENT_SECRET
+        sync: false
+      - key: FB_REDIRECT_URI
+        value: https://gt-vs-new-be-code.onrender.com/api/auth/login/facebook/callback
+
+      # ── Twilio ───────────────────────────────────────────────────────────────
+      - key: TWILLIO_ACCOUNT_ID
+        sync: false
+      - key: TWILLIO_AUTH_TOKEN
         sync: false
